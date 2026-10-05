@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#14161C">
+<title>CasaFit</title>
+<style>
+:root{--bg:#14161C;--s1:#1E212A;--s2:#272B36;--tx:#F3F1EC;--mu:#9AA0AE;--fl:#FF6B3D;--fl2:#FFB020;--ok:#2DD4BF;--rd:#FF4D6A;--r:18px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Roboto,sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
+main{flex:1;overflow-y:auto;padding:16px 16px 24px}
+h1{font-size:28px;font-weight:900;letter-spacing:-.5px}
+h2{font-size:19px;font-weight:800;margin:22px 0 10px}
+p.mu,.mu{color:var(--mu);font-size:13px}
+.card{background:var(--s1);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px}
+.sp{justify-content:space-between}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:800;color:#1a1208;background:linear-gradient(135deg,var(--fl),var(--fl2));width:100%}
+.btn.g{background:var(--s2);color:var(--tx)}
+.btn.sm{width:auto;padding:9px 14px;font-size:14px}
+.chip{display:inline-block;padding:8px 13px;border-radius:99px;background:var(--s2);font-size:13px;font-weight:700;margin:0 6px 8px 0;border:2px solid transparent;white-space:nowrap}
+.chip.on{border-color:var(--fl);color:var(--fl2)}
+.scroll{display:flex;overflow-x:auto;padding-bottom:2px}
+.scroll::-webkit-scrollbar{display:none}
+nav{display:flex;background:var(--s1);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0))}
+nav button{flex:1;background:none;border:0;color:var(--mu);font-size:11px;font-weight:700;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button i{font-style:normal;font-size:22px}
+nav button.on{color:var(--fl2)}
+.streak{background:linear-gradient(135deg,#FF6B3D,#C2255C);border-radius:24px;padding:20px;position:relative;overflow:hidden}
+.streak .n{font-size:64px;font-weight:900;line-height:1}
+.streak .f{position:absolute;right:14px;top:6px;font-size:84px;opacity:.9}
+.dots{display:flex;gap:8px;margin-top:16px}
+.dot{flex:1;text-align:center;font-size:11px;font-weight:800}
+.dot b{display:block;height:30px;border-radius:10px;background:rgba(0,0,0,.28);margin-bottom:4px;line-height:30px;font-size:15px}
+.dot.d b{background:#fff;color:#C2255C}
+.dot.t b{outline:2px solid #fff}
+.ex{display:flex;gap:12px;align-items:center;padding:12px;background:var(--s1);border-radius:14px;margin-bottom:8px}
+.ex .ic{width:46px;height:46px;border-radius:13px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.ex b{font-size:15px}
+.tag{font-size:11px;color:var(--fl2);font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--s1);border-radius:16px;padding:14px}
+.stat b{font-size:26px;font-weight:900;display:block}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal div{aspect-ratio:1;border-radius:9px;background:var(--s2);font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--mu)}
+.cal div.d{background:linear-gradient(135deg,var(--fl),var(--fl2));color:#1a1208;font-weight:800}
+.cal div.t{outline:2px solid var(--ok)}
+.badge{text-align:center;padding:12px 6px;border-radius:14px;background:var(--s1);font-size:11px;font-weight:700;opacity:.35}
+.badge.on{opacity:1}
+.badge span{display:block;font-size:30px}
+input,select{width:100%;background:var(--s2);border:0;color:var(--tx);padding:13px;border-radius:12px;font-size:16px;margin:6px 0 12px}
+label{font-size:12px;color:var(--mu);font-weight:700}
+.full{position:fixed;inset:0;background:var(--bg);z-index:10;display:none;flex-direction:column;padding:calc(env(safe-area-inset-top,0) + 16px) 18px calc(env(safe-area-inset-bottom,0) + 18px);overflow-y:auto}
+.full.show{display:flex}
+.bar{height:6px;background:var(--s2);border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--fl),var(--fl2));transition:width .3s}
+.big{font-size:30px;font-weight:900;line-height:1.1}
+.steps{margin:12px 0;padding-left:20px;color:#d4d6dd;font-size:15px;line-height:1.5}
+.timer{font-size:110px;font-weight:900;text-align:center;margin:auto 0;color:var(--fl2)}
+.sheet{align-items:stretch}
+.search{margin:0 0 10px}
+</style>
+</head>
+<body>
+<div id="app"><main id="main"></main>
+<nav id="nav"></nav></div>
+<div class="full" id="play"></div>
+<div class="full sheet" id="sheet"></div>
+
+<script>
+/* ============ DATOS ============ */
+const G={pierna:['🦵','Pierna'],pecho:['🫁','Pecho'],biceps:['💪','Bíceps'],triceps:['🔱','Tríceps'],espalda:['🔙','Espalda'],hombro:['🏋️','Hombro'],abdomen:['🔥','Abdomen'],cardio:['❤️','Cardio']};
+const MAT={ninguno:'Sin material',mochila:'🎒 Mochila',botellas:'🧴 Botellas',palo:'🧹 Palo/escoba',silla:'🪑 Silla',toalla:'🧣 Toalla',mesa:'🪵 Mesa'};
+// X(id, nombre, grupo, material, tipo r=reps s=segundos, valor, pasos)
+const X={};
+function x(id,n,g,m,t,v,d){X[id]={id,n,g,m,t,v,d}}
+/* Pierna */
+x('sent_mochila','Sentadilla con mochila al pecho','pierna','mochila','r',15,'Abraza la mochila contra el pecho.|Pies al ancho de hombros, espalda recta.|Baja hasta que los muslos queden paralelos al suelo.|Sube empujando con los talones.');
+x('zanc_bot','Zancadas con botellas','pierna','botellas','r',12,'Una botella en cada mano, brazos estirados.|Da un paso largo y baja la rodilla trasera casi al suelo.|Empuja con el pie delantero para volver.|Alterna piernas (reps por pierna).');
+x('bulg','Sentadilla búlgara en silla','pierna','silla','r',10,'Apoya el empeine de un pie en el asiento de la silla.|Baja con la pierna de adelante, torso firme.|Sube sin rebotar. Opcional: mochila al pecho.|Reps por pierna.');
+x('puente','Puente de glúteo con mochila','pierna','mochila','r',15,'Acostado boca arriba, rodillas dobladas.|Pon la mochila sobre la cadera y sujétala.|Sube la cadera apretando glúteos.|Pausa 1 s arriba y baja lento.');
+x('rdl_bot','Peso muerto rumano con botellas','pierna','botellas','r',12,'Botellas (o mochila) frente a los muslos.|Lleva la cadera hacia atrás con rodillas casi rectas.|Baja hasta sentir el estiramiento en el muslo trasero.|Sube apretando glúteos.');
+x('sent_salto','Sentadilla con salto','pierna','ninguno','r',12,'Baja en sentadilla.|Salta explosivo con los brazos arriba.|Aterriza suave y baja de nuevo.');
+x('talones','Elevación de talones con mochila','pierna','mochila','r',20,'Mochila al pecho o en la espalda.|Sube de puntillas lo más alto posible.|Baja lento. Hazlo en el borde de un escalón para más rango.');
+x('pared','Sentadilla isométrica en pared','pierna','ninguno','s',40,'Espalda pegada a la pared.|Baja hasta 90° en rodillas.|Aguanta sin mover. Respira normal.');
+/* Pecho */
+x('flex_mochila','Flexiones con mochila','pecho','mochila','r',12,'Ponte la mochila cargada (libros) en la espalda.|Manos un poco más anchas que los hombros.|Baja el pecho casi al suelo, cuerpo recto.|Empuja hasta estirar los brazos.');
+x('press_suelo','Press de pecho en suelo con botellas','pecho','botellas','r',12,'Acostado, una botella llena en cada mano.|Codos a 45° del cuerpo.|Empuja hacia arriba hasta estirar.|Baja lento hasta tocar el suelo con los codos.');
+x('aperturas','Aperturas con botellas','pecho','botellas','r',12,'Acostado, botellas arriba con codos semiflexionados.|Abre los brazos hasta el suelo.|Junta de nuevo apretando el pecho.');
+x('flex_decl','Flexiones declinadas (pies en silla)','pecho','silla','r',10,'Pies sobre la silla, manos en el suelo.|Cuerpo recto como tabla.|Baja y sube controlado. Trabaja pecho alto y hombros.');
+x('pullover','Pullover con mochila','pecho','mochila','r',12,'Acostado, sujeta la mochila con ambas manos sobre el pecho.|Llévala atrás de la cabeza con brazos casi rectos.|Regresa apretando pecho y dorsal.');
+x('flex_diam','Flexiones diamante','pecho','ninguno','r',10,'Manos juntas formando un diamante bajo el pecho.|Baja con codos pegados al cuerpo.|Sube. Pesan más tríceps y pecho interno.');
+x('flex','Flexiones clásicas','pecho','ninguno','r',15,'Manos al ancho de hombros, cuerpo recto.|Baja el pecho al suelo.|Sube sin arquear la espalda.');
+/* Tríceps */
+x('fondos_silla','Fondos de tríceps en silla','triceps','silla','r',12,'Manos en el borde de la silla (apóyala en la pared).|Piernas estiradas al frente.|Baja doblando codos a 90° hacia atrás.|Sube estirando los brazos.');
+x('ext_tri','Extensión de tríceps con mochila','triceps','mochila','r',12,'De pie o sentado, mochila sujeta con ambas manos detrás de la cabeza.|Sube estirando los brazos.|Baja lento, codos cerrados.');
+x('patada_tri','Patada de tríceps con botella','triceps','botellas','r',12,'Torso inclinado, codo pegado al costado.|Estira el brazo hacia atrás con la botella.|Vuelve lento. Reps por brazo.');
+/* Bíceps */
+x('curl_bot','Curl de bíceps con botellas','biceps','botellas','r',12,'Una botella llena por mano, palmas al frente.|Sube doblando solo los codos.|Baja en 3 segundos.');
+x('curl_mart','Curl martillo con botellas','biceps','botellas','r',12,'Agarre neutro (palmas enfrentadas).|Sube sin balancear el cuerpo.|Baja controlado. Trabaja braquial y antebrazo.');
+x('curl_mochila','Curl con mochila','biceps','mochila','r',12,'Sujeta la mochila por las dos asas, brazos estirados.|Sube la mochila al pecho.|Baja lento sin soltar tensión.');
+x('curl_palo','Curl con palo y mochila colgada','biceps','palo','r',10,'Cuelga la mochila en el centro de un palo de escoba.|Agárralo con palmas arriba.|Sube y baja con control.');
+x('curl_conc','Curl concentrado con botella','biceps','botellas','r',12,'Sentado, codo apoyado en el muslo interno.|Sube la botella hacia el hombro.|Baja lento. Reps por brazo.');
+x('curl_toalla','Curl isométrico con toalla','biceps','toalla','r',12,'Pasa la toalla bajo un pie y agarra los extremos.|Sube la mano mientras empujas con el pie.|Aprieta 2 s arriba. Reps por brazo.');
+/* Espalda */
+x('remo_mochila','Remo inclinado con mochila','espalda','mochila','r',12,'Torso inclinado ~45°, espalda recta.|Mochila colgando con ambas manos.|Tira hacia el abdomen juntando omóplatos.|Baja lento.');
+x('remo_bot','Remo a una mano con botella','espalda','botellas','r',12,'Apoya una mano en la silla.|Tira la botella hacia la cadera.|Codo pegado al cuerpo. Reps por brazo.');
+x('remo_toalla','Remo con toalla en puerta','espalda','toalla','r',12,'Cierra la puerta con la toalla atrapada por los dos lados.|Agarra los extremos, inclínate hacia atrás.|Tira de ti hacia la puerta juntando omóplatos.');
+x('remo_mesa','Remo invertido bajo mesa','espalda','mesa','r',8,'Acuéstate bajo una mesa resistente.|Agarra el borde con ambas manos.|Tira del pecho hacia la mesa.|Baja lento. Cuida que la mesa no se mueva.');
+x('superman','Superman','espalda','ninguno','r',15,'Boca abajo, brazos al frente.|Levanta brazos y piernas a la vez.|Pausa 2 s arriba y baja.');
+/* Hombro */
+x('press_hombro','Press de hombros con botellas','hombro','botellas','r',12,'De pie, botellas a la altura de las orejas.|Empuja hacia arriba sin arquear la espalda.|Baja controlado.');
+x('elev_lat','Elevaciones laterales con botellas','hombro','botellas','r',15,'Botellas a los costados.|Sube los brazos hasta la altura de los hombros.|Baja lento. Codos ligeramente doblados.');
+x('elev_front','Elevaciones frontales con mochila','hombro','mochila','r',12,'Sujeta la mochila por las asas con ambas manos.|Sube al frente hasta los hombros.|Baja sin balancear.');
+x('press_mochila','Press de hombros con mochila','hombro','mochila','r',10,'Mochila a la altura del pecho con ambas manos.|Empuja hacia arriba hasta estirar.|Baja controlado.');
+x('pike','Flexiones pike','hombro','ninguno','r',10,'Forma una V invertida con caderas altas.|Baja la cabeza hacia el suelo entre las manos.|Empuja hacia arriba. Pies en silla para más dificultad.');
+/* Abdomen */
+x('plancha','Plancha','abdomen','ninguno','s',40,'Antebrazos y puntas de pies en el suelo.|Cuerpo recto de cabeza a talones.|Aprieta abdomen y glúteos.');
+x('crunch','Crunch abdominal','abdomen','ninguno','r',20,'Acostado, rodillas dobladas.|Sube los hombros contrayendo el abdomen.|Baja sin relajar del todo.');
+x('elev_piernas','Elevación de piernas','abdomen','ninguno','r',15,'Acostado, manos bajo la cadera.|Sube las piernas rectas a 90°.|Baja lento sin tocar el suelo.');
+x('bicicleta','Bicicleta abdominal','abdomen','ninguno','r',30,'Manos tras la nuca.|Codo al rodilla opuesta alternando.|Movimiento lento y controlado.');
+x('russian','Giro ruso con mochila','abdomen','mochila','r',20,'Sentado, torso inclinado atrás, pies elevados.|Mochila entre las manos.|Gira tocando el suelo a cada lado.');
+x('mountain','Escaladores','abdomen','ninguno','s',30,'Posición de flexión.|Lleva las rodillas al pecho alternando rápido.|Mantén la cadera baja.');
+x('plancha_lat','Plancha lateral','abdomen','ninguno','s',30,'De lado sobre el antebrazo.|Eleva la cadera y mantén recto.|Cambia de lado a mitad del tiempo.');
+x('deadbug','Dead bug','abdomen','ninguno','r',12,'Acostado, brazos arriba y rodillas a 90°.|Baja brazo y pierna contrarios sin despegar la espalda baja.|Alterna lados.');
+/* Cardio */
+x('jacks','Jumping jacks','cardio','ninguno','s',40,'Salta abriendo piernas y brazos.|Cierra y repite a ritmo constante.');
+x('burpees','Burpees','cardio','ninguno','r',10,'Baja a flexión.|Salta con los pies hacia las manos.|Salta arriba con brazos extendidos.');
+x('rodillas','Rodillas altas','cardio','ninguno','s',40,'Corre en el sitio subiendo rodillas a la cadera.|Brazos activos.');
+x('skater','Saltos patinador','cardio','ninguno','s',30,'Salta lateral de una pierna a la otra.|Cruza la pierna libre por detrás.');
+x('shadow','Boxeo al aire','cardio','ninguno','s',40,'Rodillas ligeras.|Combina jab, cruzado y esquivas con ritmo.');
+
+const R={
+ pierna:{n:'Día de pierna',i:'🦵',ex:['sent_mochila','zanc_bot','bulg','puente','rdl_bot','sent_salto','talones','pared']},
+ pecho:{n:'Día de pecho y tríceps',i:'🫁',ex:['flex_mochila','press_suelo','aperturas','flex_decl','pullover','flex_diam','fondos_silla','ext_tri']},
+ biceps:{n:'Día de bíceps',i:'💪',ex:['curl_bot','curl_mart','curl_mochila','curl_palo','curl_conc','curl_toalla','patada_tri']},
+ espalda:{n:'Día de espalda',i:'🔙',ex:['remo_mochila','remo_bot','remo_toalla','remo_mesa','superman','pullover']},
+ hombro:{n:'Día de hombros',i:'🏋️',ex:['press_hombro','elev_lat','elev_front','press_mochila','pike','patada_tri']},
+ abdomen:{n:'Abdomen 6 pack',i:'🔥',ex:['plancha','crunch','elev_piernas','bicicleta','russian','mountain','plancha_lat','deadbug']},
+ hiit:{n:'HIIT quema grasa',i:'❤️',ex:['jacks','burpees','rodillas','skater','mountain','sent_salto','shadow']},
+ full:{n:'Cuerpo completo',i:'⚡',ex:['sent_mochila','flex_mochila','remo_mochila','press_hombro','curl_bot','fondos_silla','plancha','jacks']}
+};
+const GOALS={musculo:{n:'Ganar músculo',i:'💪',rest:60,plan:['pecho','pierna','biceps',null,'espalda','hombro',null]},
+ peso:{n:'Bajar de peso',i:'⚖️',rest:30,plan:['hiit','full','abdomen','hiit','pierna','full',null]},
+ sixpack:{n:'Hacer 6 pack',i:'🔥',rest:30,plan:['abdomen','hiit','full','abdomen','hiit','pierna',null]},
+ fuerza:{n:'Fuerza general',i:'🏆',rest:75,plan:['full','pecho',null,'pierna','espalda',null,null]}};
+const LV={principiante:{s:2,m:.8},intermedio:{s:3,m:1},avanzado:{s:4,m:1.25}};
+const DN=['L','M','X','J','V','S','D'], DF=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const BADGES=[['🌱','Primer día',s=>s.n>=1],['🔥','Racha 3',s=>s.best>=3],['⚡','Racha 7',s=>s.best>=7],['🚀','Racha 14',s=>s.best>=14],['👑','Racha 30',s=>s.best>=30],['💯','10 entrenos',s=>s.n>=10],['🏅','25 entrenos',s=>s.n>=25],['🏆','50 entrenos',s=>s.n>=50]];
+
+/* ============ ESTADO ============ */
+let S;
+try{S=JSON.parse(localStorage.getItem('casafit'))}catch(e){}
+S=Object.assign({name:'',goal:'musculo',level:'intermedio',h:'',w:[],hist:[]},S||{});
+const save=()=>{try{localStorage.setItem('casafit',JSON.stringify(S))}catch(e){}};
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const ds=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const dayIdx=d=>((d||new Date()).getDay()+6)%7;
+const dnum=s=>{const[a,b,c]=s.split('-').map(Number);return Math.round(Date.UTC(a,b-1,c)/864e5)};
+
+/* Racha: cuenta días entrenados seguidos; se permite 1 día de descanso entre ellos */
+function stats(){
+ const days=[...new Set(S.hist.map(h=>h.d))].map(dnum).sort((a,b)=>b-a);
+ const t=dnum(ds());let cur=0,best=0;
+ if(days.length&&t-days[0]<=2){cur=1;for(let i=1;i<days.length;i++){if(days[i-1]-days[i]<=2)cur++;else break}}
+ let run=0;const asc=[...days].reverse();
+ asc.forEach((d,i)=>{run=(i&&d-asc[i-1]<=2)?run+1:1;best=Math.max(best,run)});
+ return{cur,best,n:S.hist.length,min:S.hist.reduce((a,h)=>a+h.min,0),days:new Set(S.hist.map(h=>h.d))};
+}
+
+/* ============ UI ============ */
+let tab='home',filt={g:'',m:'',q:''};
+const TABS=[['home','🏠','Inicio'],['rut','📋','Rutinas'],['ej','🧴','Ejercicios'],['prog','📈','Progreso'],['perf','👤','Perfil']];
+function nav(){$('#nav').innerHTML=TABS.map(t=>`<button class="${tab==t[0]?'on':''}" onclick="go('${t[0]}')"><i>${t[1]}</i>${t[2]}</button>`).join('')}
+function go(t){tab=t;render();$('#main').scrollTop=0}
+function mins(rid){const k=LV[S.level];return Math.round(R[rid].ex.reduce((a,id)=>{const e=X[id];return a+k.s*((e.t=='s'?Math.round(e.v*k.m/5)*5:e.v*k.m*3)+GOALS[S.goal].rest)},0)/60)}
+
+function render(){nav();({home,rut,ej,prog,perf})[tab]()}
+
+function home(){
+ const st=stats(),di=dayIdx(),g=GOALS[S.goal],today=g.plan[di],doneToday=st.days.has(ds());
+ const wk=new Date();wk.setDate(wk.getDate()-di);
+ const dots=DN.map((l,i)=>{const d=new Date(wk);d.setDate(wk.getDate()+i);const k=ds(d);return`<div class="dot ${st.days.has(k)?'d':''} ${i==di?'t':''}"><b>${st.days.has(k)?'✓':''}</b>${l}</div>`}).join('');
+ $('#main').innerHTML=`
+ <p class="mu">${DF[di]}</p><h1>Hola${S.name?', '+esc(S.name):''} 👋</h1>
+ <div class="streak" style="margin-top:14px"><div class="f">🔥</div><div class="n">${st.cur}</div><div style="font-weight:800">${st.cur==1?'día':'días'} de racha</div>
+ <div style="font-size:12px;opacity:.85;margin-top:2px">Mejor racha: ${st.best} · Puedes descansar 1 día sin perderla</div><div class="dots">${dots}</div></div>
+ <h2>Tu meta</h2><div class="scroll">${Object.entries(GOALS).map(([k,v])=>`<span class="chip ${S.goal==k?'on':''}" onclick="setGoal('${k}')">${v.i} ${v.n}</span>`).join('')}</div>
+ <h2>Hoy</h2>
+ ${today?`<div class="card"><div class="row"><div class="big" style="font-size:44px">${R[today].i}</div><div><div class="big" style="font-size:22px">${R[today].n}</div><div class="mu">${R[today].ex.length} ejercicios · ~${mins(today)} min</div></div></div>
+ <button class="btn" style="margin-top:14px" onclick="start('${today}')">${doneToday?'Entrenar otra vez':'Empezar entreno'}</button></div>`
+ :`<div class="card"><div class="big" style="font-size:22px">😴 Día de descanso</div><p class="mu" style="margin-top:6px">El músculo crece mientras descansas. Tu racha sigue viva.</p><button class="btn g" style="margin-top:12px" onclick="go('rut')">Entrenar igual</button></div>`}
+ <h2>Plan semanal · ${g.n}</h2>
+ ${g.plan.map((r,i)=>`<div class="ex" ${r?`onclick="start('${r}')"`:''} style="${i==di?'outline:2px solid var(--fl)':''}"><div class="ic">${r?R[r].i:'😴'}</div><div style="flex:1"><b>${DF[i]}</b><div class="mu">${r?R[r].n:'Descanso'}</div></div>${r?'<span class="tag">▶</span>':''}</div>`).join('')}
+ <div class="card" style="margin-top:14px"><b>🎒 Cómo cargar tu equipo</b><p class="mu" style="margin-top:6px;line-height:1.5">Botella de 1 L llena ≈ 1 kg. Garrafa de 5 L ≈ 5 kg. Mochila: mete libros o botellas hasta 5–10 kg y ajusta las correas. Sube la carga cuando hagas todas las series con facilidad.</p></div>`;
+}
+function setGoal(k){S.goal=k;save();render()}
+
+function rut(){
+ $('#main').innerHTML=`<h1>Rutinas</h1><p class="mu">Elige el día que quieras entrenar</p><div style="height:12px"></div>`+
+ Object.entries(R).map(([k,r])=>`<div class="card"><div class="row sp"><div class="row"><div class="big" style="font-size:34px">${r.i}</div><div><b style="font-size:17px">${r.n}</b><div class="mu">${r.ex.length} ejercicios · ~${mins(k)} min</div></div></div></div>
+ <div class="mu" style="margin:10px 0">${r.ex.map(id=>X[id].n).slice(0,4).join(', ')}…</div><button class="btn sm" onclick="start('${k}')">Empezar</button></div>`).join('');
+}
+
+function ej(){
+ const list=Object.values(X).filter(e=>(!filt.g||e.g==filt.g)&&(!filt.m||e.m==filt.m)&&(!filt.q||e.n.toLowerCase().includes(filt.q)));
+ $('#main').innerHTML=`<h1>Ejercicios</h1><p class="mu">${Object.keys(X).length} ejercicios sin pesas</p><div style="height:10px"></div>
+ <input class="search" id="q" placeholder="Buscar ejercicio…" value="${esc(filt.q)}" oninput="filt.q=this.value.toLowerCase();ejList()">
+ <div class="scroll"><span class="chip ${!filt.g?'on':''}" onclick="filt.g='';ej()">Todos</span>${Object.entries(G).map(([k,v])=>`<span class="chip ${filt.g==k?'on':''}" onclick="filt.g='${k}';ej()">${v[0]} ${v[1]}</span>`).join('')}</div>
+ <div class="scroll"><span class="chip ${!filt.m?'on':''}" onclick="filt.m='';ej()">Todo material</span>${Object.entries(MAT).map(([k,v])=>`<span class="chip ${filt.m==k?'on':''}" onclick="filt.m='${k}';ej()">${v}</span>`).join('')}</div>
+ <div id="el"></div>`;ejList();
+}
+function ejList(){
+ const list=Object.values(X).filter(e=>(!filt.g||e.g==filt.g)&&(!filt.m||e.m==filt.m)&&(!filt.q||e.n.toLowerCase().includes(filt.q)));
+ $('#el').innerHTML=list.map(e=>`<div class="ex" onclick="detail('${e.id}')"><div class="ic">${G[e.g][0]}</div><div style="flex:1"><b>${e.n}</b><div class="tag">${MAT[e.m]} · ${G[e.g][1]}</div></div></div>`).join('')||'<p class="mu">No hay resultados. Prueba otro filtro.</p>';
+}
+function detail(id){
+ const e=X[id],sh=$('#sheet');
+ sh.innerHTML=`<button class="btn g sm" style="align-self:flex-start" onclick="$('#sheet').classList.remove('show')">← Volver</button>
+ <div style="font-size:60px;margin-top:16px">${G[e.g][0]}</div><div class="big">${e.n}</div><div class="tag" style="margin:6px 0">${MAT[e.m]} · ${G[e.g][1]} · ${e.t=='s'?e.v+' s':e.v+' reps'}</div>
+ <ol class="steps">${e.d.split('|').map(s=>`<li>${s}</li>`).join('')}</ol>`;
+ sh.classList.add('show');
+}
+
+function prog(){
+ const st=stats(),now=new Date(),di=dayIdx(),start=new Date(now);start.setDate(now.getDate()-di-28);
+ let cal='';for(let i=0;i<35;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=ds(d);cal+=`<div class="${st.days.has(k)?'d':''} ${k==ds()?'t':''}">${d.getDate()}</div>`}
+ const w=S.w.slice(-12),h=parseFloat(S.h),last=S.w.length?S.w[S.w.length-1].kg:0;
+ let chart='';
+ if(w.length>1){const v=w.map(a=>a.kg),mn=Math.min(...v)-1,mx=Math.max(...v)+1,pts=w.map((a,i)=>`${(i/(w.length-1))*300},${80-((a.kg-mn)/(mx-mn))*70}`).join(' ');
+  chart=`<svg viewBox="0 0 300 90" style="width:100%;margin-top:10px"><polyline points="${pts}" fill="none" stroke="#FFB020" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+ $('#main').innerHTML=`<h1>Progreso</h1><div style="height:12px"></div>
+ <div class="grid"><div class="stat"><b>🔥 ${st.cur}</b><span class="mu">Racha actual</span></div><div class="stat"><b>${st.best}</b><span class="mu">Mejor racha</span></div><div class="stat"><b>${st.n}</b><span class="mu">Entrenos</span></div><div class="stat"><b>${st.min}</b><span class="mu">Minutos</span></div></div>
+ <h2>Últimas 5 semanas</h2><div class="cal">${DN.map(l=>`<div style="background:none;aspect-ratio:auto">${l}</div>`).join('')}${cal}</div>
+ <h2>Peso corporal</h2><div class="card"><div class="row"><input id="kg" type="number" step="0.1" placeholder="kg de hoy" style="margin:0"><button class="btn sm" onclick="addW()">Guardar</button></div>
+ ${last?`<p class="mu" style="margin-top:10px">Último: ${last} kg${h?` · IMC ${(last/((h/100)**2)).toFixed(1)}`:''}</p>`:''}${chart}</div>
+ <h2>Logros</h2><div class="grid" style="grid-template-columns:repeat(4,1fr)">${BADGES.map(b=>`<div class="badge ${b[2](st)?'on':''}"><span>${b[0]}</span>${b[1]}</div>`).join('')}</div>`;
+}
+function addW(){const v=parseFloat($('#kg').value);if(!v)return;S.w.push({d:ds(),kg:v});save();prog()}
+
+function perf(){
+ $('#main').innerHTML=`<h1>Perfil</h1><div style="height:12px"></div><div class="card">
+ <label>Nombre</label><input id="pn" value="${esc(S.name)}" placeholder="¿Cómo te llamas?">
+ <label>Altura (cm)</label><input id="ph" type="number" value="${esc(S.h)}" placeholder="170">
+ <label>Nivel</label><select id="pl">${Object.keys(LV).map(k=>`<option ${S.level==k?'selected':''}>${k}</option>`).join('')}</select>
+ <label>Meta</label><select id="pg">${Object.entries(GOALS).map(([k,v])=>`<option value="${k}" ${S.goal==k?'selected':''}>${v.n}</option>`).join('')}</select>
+ <button class="btn" onclick="saveP()">Guardar</button></div>
+ <button class="btn g" onclick="if(confirm('¿Borrar todo tu progreso?')){S={name:'',goal:'musculo',level:'intermedio',h:'',w:[],hist:[]};save();go('home')}">Borrar progreso</button>`;
+}
+function saveP(){S.name=$('#pn').value.trim();S.h=$('#ph').value;S.level=$('#pl').value;S.goal=$('#pg').value;save();go('home')}
+
+/* ============ ENTRENAMIENTO ============ */
+let P=null,tm=null;
+const buzz=()=>{try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}};
+function start(rid){
+ const k=LV[S.level];
+ P={rid,i:0,s:1,t0:Date.now(),list:R[rid].ex.map(id=>{const e=X[id];return{...e,sets:k.s,val:e.t=='s'?Math.max(10,Math.round(e.v*k.m/5)*5):Math.round(e.v*k.m)}})};
+ $('#play').classList.add('show');playUI();
+}
+function quit(){if(confirm('¿Salir del entreno? Se perderá este avance.')){clearInterval(tm);P=null;$('#play').classList.remove('show')}}
+function playUI(){
+ const e=P.list[P.i],pr=((P.i*1+(P.s-1)/e.sets)/P.list.length)*100;
+ $('#play').innerHTML=`<div class="row sp"><button class="btn g sm" onclick="quit()">✕ Salir</button><span class="mu">${P.i+1} / ${P.list.length}</span></div>
+ <div class="bar" style="margin:14px 0"><i style="width:${pr}%"></i></div>
+ <div class="tag">${MAT[e.m]} · ${G[e.g][1]}</div><div class="big" style="margin:6px 0 4px">${e.n}</div>
+ <div class="row" style="margin:8px 0"><span class="chip on">Serie ${P.s} de ${e.sets}</span><span class="chip">${e.t=='s'?e.val+' segundos':e.val+' repeticiones'}</span></div>
+ <ol class="steps">${e.d.split('|').map(s=>`<li>${s}</li>`).join('')}</ol>
+ <div style="margin-top:auto;padding-top:14px">${e.t=='s'?`<button class="btn" onclick="cd(${e.val},'${esc(e.n).replace(/'/g,"")}',doneSet,'Terminar ya')">▶ Empezar ${e.val} s</button>`:`<button class="btn" onclick="doneSet()">✔ Serie completada</button>`}
+ <button class="btn g" style="margin-top:8px" onclick="skipEx()">Saltar ejercicio</button></div>`;
+}
+function cd(sec,title,end,skip){
+ clearInterval(tm);let t=sec;
+ const draw=()=>{$('#play').innerHTML=`<div class="big" style="text-align:center;margin-top:20px">${title}</div><div class="timer">${t}</div><div class="mu" style="text-align:center">${P&&P.list[P.i]?'':''}</div><div class="row"><button class="btn g" onclick="t_add(15)">+15 s</button><button class="btn" onclick="t_end()">${skip}</button></div>`};
+ window.t_add=n=>{t+=n;draw()};
+ window.t_end=()=>{clearInterval(tm);end()};
+ draw();
+ tm=setInterval(()=>{t--;if(t<=0){clearInterval(tm);buzz();end()}else draw()},1000);
+}
+function doneSet(){
+ const e=P.list[P.i];P.s++;
+ if(P.s>e.sets){P.i++;P.s=1}
+ if(P.i>=P.list.length)return finish();
+ const nx=P.list[P.i];
+ cd(GOALS[S.goal].rest,'Descansa 😮‍💨<br><span class="mu" style="font-size:15px">Sigue: '+nx.n+'</span>',playUI,'Saltar descanso');
+}
+function skipEx(){P.i++;P.s=1;if(P.i>=P.list.length)return finish();playUI()}
+function finish(){
+ clearInterval(tm);
+ const min=Math.max(1,Math.round((Date.now()-P.t0)/60000));
+ S.hist.push({d:ds(),r:P.rid,min,n:P.list.length});save();
+ const st=stats();P=null;
+ $('#play').innerHTML=`<div style="margin:auto 0;text-align:center"><div style="font-size:90px">🎉</div><div class="big">¡Entreno completo!</div>
+ <p class="mu" style="margin:10px 0 20px">${min} min · racha de ${st.cur} ${st.cur==1?'día':'días'} 🔥</p><button class="btn" onclick="$('#play').classList.remove('show');go('home')">Listo</button></div>`;
+ buzz();
+}
+render();
+</script>
+</body>
+</html>
